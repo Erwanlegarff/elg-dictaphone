@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3a5f">
+<title>ELG Dictaphone</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<!-- Essai téléphone (GitHub Pages), copie de ELG_Dictaphone.html du 15/11/2026. Aucune donnée : les dictées restent dans le navigateur du téléphone. -->
+<style>
+.seulement-mobile { display: none; }
+html.mobile .seulement-mobile { display: block; }
+html.mobile .seulement-ordi { display: none !important; }
+.version { font-size: .75rem; color: var(--doux); }
+</style>
+<style>
+:root {
+  --fond: #f3f5f8;
+  --carte: #ffffff;
+  --texte: #1c2430;
+  --doux: #5d6b7c;
+  --bord: #d6dce4;
+  --accent: #1f5fa8;
+  --accent-texte: #ffffff;
+  --rouge: #c62828;
+  --onde: #9fb3c8;
+  --onde-lue: #1f5fa8;
+  --ok: #2e7d32;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #12161c;
+    --carte: #1b2129;
+    --texte: #e6ebf1;
+    --doux: #9aa7b6;
+    --bord: #2e3743;
+    --accent: #5b9be0;
+    --accent-texte: #0c1620;
+    --rouge: #ef5350;
+    --onde: #3d4b5c;
+    --onde-lue: #5b9be0;
+    --ok: #66bb6a;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--fond);
+  color: var(--texte);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; max-width: 760px; margin: 0 auto;
+}
+h1 { font-size: 1.25rem; margin: 0; }
+h2 { font-size: 1rem; margin: 0 0 10px; }
+.etat {
+  font-size: .85rem; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--bord); color: var(--doux);
+}
+.etat.enr { color: #fff; background: var(--rouge); border-color: var(--rouge); }
+.etat.lec { color: var(--accent-texte); background: var(--accent); border-color: var(--accent); }
+main { max-width: 760px; margin: 0 auto; padding: 0 16px 32px; }
+.carte {
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 12px;
+  padding: 14px; margin-bottom: 14px;
+}
+button, select, input[type=text], input[type=url] {
+  font: inherit; color: var(--texte); background: var(--carte);
+  border: 1px solid var(--bord); border-radius: 8px; padding: 8px 12px;
+}
+button { cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+button:disabled { opacity: .45; cursor: default; }
+button.primaire { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+.ligne-nom { display: flex; gap: 8px; }
+.ligne-nom input { flex: 1; min-width: 0; }
+.temps { text-align: center; font-variant-numeric: tabular-nums; margin: 12px 0 6px; }
+.temps #t-pos { font-size: 2.2rem; font-weight: 600; }
+.temps .tot { color: var(--doux); font-size: 1.1rem; }
+.mode-actif { text-align: center; color: var(--doux); font-size: .9rem; margin-bottom: 8px; }
+canvas { width: 100%; height: 110px; display: block; border-radius: 8px; background: var(--fond); touch-action: none; cursor: pointer; }
+.niveau { height: 6px; background: var(--fond); border-radius: 3px; margin: 8px 0 14px; overflow: hidden; }
+#niveau-barre { height: 100%; width: 0; background: var(--ok); transition: width 60ms linear; }
+.transport { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+.transport button {
+  width: 56px; height: 56px; border-radius: 50%; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.transport button.gros { width: 72px; height: 72px; }
+.transport button svg { width: 26px; height: 26px; fill: currentColor; }
+.transport button.gros svg { width: 32px; height: 32px; }
+#btn-enr { color: var(--rouge); border: 2px solid var(--rouge); }
+#btn-enr.actif { background: var(--rouge); color: #fff; }
+#btn-lecture.actif { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+.ligne { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.segment { display: inline-flex; border: 1px solid var(--bord); border-radius: 8px; overflow: hidden; }
+.segment button { border: 0; border-radius: 0; }
+.segment button[aria-pressed=true] { background: var(--accent); color: var(--accent-texte); }
+.case { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; color: var(--texte); }
+.case input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+#btn-terminer { width: 100%; margin-top: 12px; padding: 12px; font-weight: 600; }
+#message { min-height: 1.4em; margin: 10px 0 0; color: var(--doux); font-size: .92rem; white-space: pre-line; }
+#message.erreur { color: var(--rouge); }
+.reglage { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.reglage label { font-size: .9rem; color: var(--doux); }
+.reglage .rangee { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.reglage select, .reglage input { width: 100%; }
+#liste { list-style: none; margin: 0; padding: 0; }
+#liste li {
+  display: flex; align-items: center; gap: 8px; padding: 8px 0;
+  border-top: 1px solid var(--bord);
+}
+#liste li:first-child { border-top: 0; }
+#liste li.courante .titre { font-weight: 600; color: var(--accent); }
+#liste .infos { flex: 1; min-width: 0; }
+#liste .titre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#liste .detail { font-size: .82rem; color: var(--doux); }
+#liste button { padding: 6px 10px; font-size: .88rem; }
+.vide { color: var(--doux); font-size: .92rem; }
+.aide { font-size: .9rem; color: var(--doux); }
+.aide table { border-collapse: collapse; width: 100%; }
+.aide td { padding: 3px 6px 3px 0; vertical-align: top; }
+.aide kbd {
+  font: .82rem ui-monospace, Consolas, monospace; border: 1px solid var(--bord);
+  border-radius: 4px; padding: 1px 5px; background: var(--fond); color: var(--texte);
+}
+@media (max-width: 420px) {
+  .transport { gap: 4px; }
+  .transport button { width: 42px; height: 42px; }
+  .transport button.gros { width: 58px; height: 58px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>ELG Dictaphone <span class="version">essai téléphone</span></h1>
+  <span id="etat" class="etat">Prêt</span>
+</header>
+<main>
+  <section class="carte">
+    <div class="ligne-nom">
+      <input type="text" id="nom" aria-label="Nom de la dictée" placeholder="Nom de la dictée (sans nom ni élément identifiant)">
+      <button id="btn-nouvelle" title="Commencer une nouvelle dictée">Nouvelle</button>
+    </div>
+    <div class="temps"><span id="t-pos">00:00</span> <span class="tot">/ <span id="t-tot">00:00</span></span></div>
+    <div class="mode-actif" id="mode-actif">Mode écrasement</div>
+    <canvas id="onde" aria-label="Enveloppe de la dictée : cliquer pour placer le curseur"></canvas>
+    <div class="niveau" aria-hidden="true"><div id="niveau-barre"></div></div>
+    <div class="transport">
+      <button id="btn-debut" title="Aller au début (Origine)" aria-label="Aller au début"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button id="btn-retour" title="Retour rapide : maintenir (F7 ou ←)" aria-label="Retour rapide"><svg viewBox="0 0 24 24"><path d="M11 6v12l-9-6zM21 6v12l-9-6z"/></svg></button>
+      <button id="btn-lecture" class="gros" title="Lecture / Stop (F9 ou Espace)" aria-label="Lecture"><svg viewBox="0 0 24 24"><path id="ico-lecture" d="M7 4v16l13-8z"/></svg></button>
+      <button id="btn-enr" class="gros" title="Enregistrer / Pause (F8 ou R)" aria-label="Enregistrer"><svg viewBox="0 0 24 24"><path id="ico-enr" d="M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16z"/></svg></button>
+      <button id="btn-avance" title="Avance rapide : maintenir (F10 ou →)" aria-label="Avance rapide"><svg viewBox="0 0 24 24"><path d="M13 6v12l9-6zM3 6v12l9-6z"/></svg></button>
+      <button id="btn-fin" title="Aller à la fin (Fin)" aria-label="Aller à la fin"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    </div>
+    <div class="ligne">
+      <div class="segment" role="group" aria-label="Mode d'enregistrement">
+        <button id="mode-ecr" aria-pressed="true" title="Le nouveau passage remplace ce qui suit le curseur (I pour basculer)">Écrasement</button>
+        <button id="mode-ins" aria-pressed="false" title="Le nouveau passage s'intercale au curseur (I pour basculer)">Insertion</button>
+      </div>
+      <button id="btn-tronquer" title="Effacer tout ce qui suit le curseur">Effacer la suite</button>
+    </div>
+    <label class="case seulement-ordi"><input type="checkbox" id="auto-plaud"> <span>En terminant la dictée, ouvrir Plaud pour l'import (sur ordinateur : Plaud Web s'ouvre, cliquer sur « Importer »)</span></label>
+    <div class="reglage seulement-mobile" style="margin-top:14px">
+      <label for="fin-mobile">En terminant la dictée</label>
+      <select id="fin-mobile">
+        <option value="appli">Partager (appli Plaud, OneDrive…)</option>
+        <option value="site">Fichier + site Plaud</option>
+        <option value="fichier">Fichier seulement</option>
+      </select>
+    </div>
+    <button id="btn-terminer" class="primaire">Terminer la dictée</button>
+    <div class="ligne">
+      <button id="btn-exporter">Exporter en WAV</button>
+      <button id="btn-plaud"><span class="seulement-ordi">Envoyer à Plaud maintenant</span><span class="seulement-mobile">Partager (appli Plaud…)</span></button>
+      <button id="btn-plaud-site" class="seulement-mobile">Site Plaud</button>
+    </div>
+    <p id="message" role="status"></p>
+  </section>
+
+  <section class="carte">
+    <h2>Dictées</h2>
+    <ul id="liste"></ul>
+  </section>
+
+  <section class="carte">
+    <h2>Réglages</h2>
+    <div class="reglage">
+      <label for="micro">Micro</label>
+      <select id="micro"><option value="">Micro par défaut</option></select>
+    </div>
+    <div class="reglage" id="reglage-dossier">
+      <label>Dossier d'export des fichiers WAV</label>
+      <div class="rangee"><button id="btn-dossier">Choisir le dossier</button> <span id="nom-dossier" class="vide">Aucun : les fichiers vont dans Téléchargements</span></div>
+    </div>
+    <div class="reglage">
+      <label for="plaud-url">Adresse de Plaud Web (ouverte sur ordinateur pour l'import)</label>
+      <input type="url" id="plaud-url">
+    </div>
+  </section>
+
+  <section class="carte aide seulement-mobile">
+    <h2>Sur le téléphone</h2>
+    <p>● enregistre ou met en pause ; ▶ relit. ⏪ et ⏩ : appui court = 1 s, appui maintenu = défilement. Toucher ou glisser sur l'enveloppe place le curseur.</p>
+    <p>Pendant la dictée, l'écran reste allumé. Si l'écran se verrouille ou si vous changez d'application, l'enregistrement se met en pause : rien n'est perdu, appuyer de nouveau sur ● pour reprendre.</p>
+    <p>Dictées sans nom ni élément identifiant. Elles restent dans ce téléphone tant qu'elles ne sont pas partagées.</p>
+  </section>
+
+  <section class="carte aide seulement-ordi">
+    <h2>Raccourcis clavier</h2>
+    <table>
+      <tr><td><kbd>F8</kbd> ou <kbd>R</kbd></td><td>Enregistrer / pause</td></tr>
+      <tr><td><kbd>F9</kbd> ou <kbd>Espace</kbd></td><td>Lecture / stop</td></tr>
+      <tr><td><kbd>F7</kbd> ou <kbd>←</kbd> maintenu</td><td>Retour rapide</td></tr>
+      <tr><td><kbd>F10</kbd> ou <kbd>→</kbd> maintenu</td><td>Avance rapide</td></tr>
+      <tr><td><kbd>Origine</kbd> / <kbd>Fin</kbd></td><td>Début / fin de la dictée</td></tr>
+      <tr><td><kbd>I</kbd></td><td>Basculer écrasement / insertion</td></tr>
+      <tr><td><kbd>Échap</kbd></td><td>Tout arrêter</td></tr>
+    </table>
+    <p>Les dictées restent sur cet appareil (dans le navigateur) tant qu'elles ne sont pas exportées ou envoyées.</p>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+// ---------------------------------------------------------------------------
+// Paramètres
+// ---------------------------------------------------------------------------
+const SR = 16000;              // fréquence d'enregistrement : 16 kHz mono 16 bits
+const BLOC = 160;              // un point d'enveloppe = 10 ms
+const VUE_MIN = SR * 30;       // l'enveloppe montre au moins 30 s
+const PLAUD_URL_DEFAUT = 'https://web.plaud.ai/';
+const MOBILE = /Android|iPhone|iPad/i.test(navigator.userAgent);
+if (MOBILE) document.documentElement.classList.add('mobile');
+
+const $ = id => document.getElementById(id);
+
+// ---------------------------------------------------------------------------
+// Etat de la dictée courante
+// ---------------------------------------------------------------------------
+const etat = {
+  data: new Int16Array(SR * 60),   // tampon (capacité qui double au besoin)
+  len: 0,                          // nombre d'échantillons dictés
+  pos: 0,                          // curseur
+  mode: 'ecrasement',              // ou 'insertion'
+  enr: false,
+  lecture: false,
+  queue: null,                     // suite mise de côté pendant une insertion
+  id: null, cree: null, envoye: null, exporte: null,
+  sale: true,                      // l'affichage doit être redessiné
+  aSauver: false,
+};
+let peaks = new Uint8Array(1024);
+
+function capacite(n) {
+  if (n <= etat.data.length) return;
+  let c = etat.data.length;
+  while (c < n) c *= 2;
+  const d = new Int16Array(c);
+  d.set(etat.data.subarray(0, etat.len));
+  etat.data = d;
+}
+
+function majPeaks(de, a) {
+  const nb = Math.ceil(etat.len / BLOC);
+  if (nb > peaks.length) {
+    let c = peaks.length;
+    while (c < nb) c *= 2;
+    const p = new Uint8Array(c);
+    p.set(peaks);
+    peaks = p;
+  }
+  const b0 = Math.floor(de / BLOC), b1 = Math.min(nb, Math.ceil(a / BLOC));
+  for (let b = b0; b < b1; b++) {
+    let m = 0;
+    const s = b * BLOC, e = Math.min(s + BLOC, etat.len);
+    for (let i = s; i < e; i++) { const v = Math.abs(etat.data[i]); if (v > m) m = v; }
+    peaks[b] = Math.min(255, Math.round(Math.sqrt(m / 32768) * 255));
+  }
+  etat.sale = true;
+}
+
+// Ecrit au curseur : remplace ce qui suit (écrasement) ou prolonge la dictée.
+// En insertion, la suite a été mise de côté au départ (etat.queue), donc pos = len.
+function ecrire(echantillons) {
+  const n = echantillons.length;
+  if (!n) return;
+  capacite(etat.pos + n);
+  etat.data.set(echantillons, etat.pos);
+  const avant = etat.pos;
+  etat.pos += n;
+  if (etat.pos > etat.len) etat.len = etat.pos;
+  majPeaks(avant, etat.pos);
+  etat.aSauver = true;
+}
+
+// ---------------------------------------------------------------------------
+// Audio : micro, rééchantillonnage, lecture
+// ---------------------------------------------------------------------------
+let ctx = null, flux = null, source = null, proc = null, muet = null;
+
+function contexte() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+// Moyenne glissante sur chaque intervalle de sortie (filtre anti-repliement simple)
+const rs = {
+  ratio: 3, phase: 0, acc: 0, n: 0,
+  reset() { this.ratio = contexte().sampleRate / SR; this.phase = 0; this.acc = 0; this.n = 0; },
+  traiter(x) {
+    const out = new Int16Array(Math.ceil(x.length / this.ratio) + 2);
+    let k = 0;
+    for (let i = 0; i < x.length; i++) {
+      this.acc += x[i]; this.n++; this.phase += 1;
+      if (this.phase >= this.ratio) {
+        this.phase -= this.ratio;
+        let v = this.acc / this.n;
+        this.acc = 0; this.n = 0;
+        v = v < -1 ? -1 : v > 1 ? 1 : v;
+        out[k++] = v < 0 ? v * 32768 : v * 32767;
+      }
+    }
+    return out.subarray(0, k);
+  },
+};
+
+async function ouvrirMicro() {
+  if (flux) return;
+  const c = contexte();
+  const idMicro = $('micro').value;
+  const audio = { channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: true };
+  if (idMicro) audio.deviceId = { exact: idMicro };
+  flux = await navigator.mediaDevices.getUserMedia({ audio });
+  source = c.createMediaStreamSource(flux);
+  proc = c.createScriptProcessor(4096, 1, 1);
+  muet = c.createGain();
+  muet.gain.value = 0;
+  proc.onaudioprocess = e => {
+    const x = e.inputBuffer.getChannelData(0);
+    niveau(x);
+    if (etat.enr) ecrire(rs.traiter(x));
+  };
+  source.connect(proc);
+  proc.connect(muet);
+  muet.connect(c.destination);
+  listerMicros();
+}
+
+function fermerMicro() {
+  if (!flux) return;
+  try { source.disconnect(); proc.disconnect(); muet.disconnect(); } catch (e) {}
+  flux.getTracks().forEach(t => t.stop());
+  flux = source = proc = muet = null;
+  niveauCible = 0;
+}
+
+let niveauCible = 0;
+function niveau(x) {
+  let s = 0;
+  for (let i = 0; i < x.length; i += 4) s += x[i] * x[i];
+  const rms = Math.sqrt(s / (x.length / 4));
+  niveauCible = Math.min(1, Math.sqrt(rms) * 2.2);
+}
+
+async function listerMicros() {
+  try {
+    const choix = $('micro').value;
+    const appareils = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+    const sel = $('micro');
+    sel.innerHTML = '<option value="">Micro par défaut</option>';
+    appareils.forEach(d => {
+      if (!d.deviceId || d.deviceId === 'default') return;
+      const o = document.createElement('option');
+      o.value = d.deviceId;
+      o.textContent = d.label || 'Micro';
+      sel.appendChild(o);
+    });
+    sel.value = choix || (await lireReglage('micro')) || '';
+  } catch (e) {}
+}
+
+// Lecture par tranches de 2 s, programmées à l'avance
+const lec = { sources: [], t0: 0, p0: 0, suivant: 0, suivantT: 0, minuteur: null };
+
+function demarrerLecture() {
+  if (etat.enr) pauseEnr();
+  if (etat.len === 0) return;
+  if (etat.pos >= etat.len) etat.pos = 0;
+  const c = contexte();
+  lec.p0 = etat.pos;
+  lec.t0 = c.currentTime + 0.05;
+  lec.suivant = etat.pos;
+  lec.suivantT = lec.t0;
+  etat.lecture = true;
+  programmer();
+  lec.minuteur = setInterval(programmer, 200);
+  maj();
+}
+
+function programmer() {
+  const c = ctx;
+  while (lec.suivant < etat.len && lec.suivantT < c.currentTime + 2) {
+    const n = Math.min(SR * 2, etat.len - lec.suivant);
+    const nOut = Math.max(1, Math.round(n * c.sampleRate / SR));
+    const b = c.createBuffer(1, nOut, c.sampleRate);
+    const ch = b.getChannelData(0);
+    const r = SR / c.sampleRate, d = etat.data, o = lec.suivant, fin = o + n - 1;
+    for (let i = 0; i < nOut; i++) {
+      const t = o + i * r, k = Math.floor(t), f = t - k;
+      const a = d[k], bb = d[Math.min(k + 1, fin)];
+      ch[i] = (a + (bb - a) * f) / 32768;
+    }
+    const s = c.createBufferSource();
+    s.buffer = b;
+    s.connect(c.destination);
+    s.start(lec.suivantT);
+    s.onended = () => { lec.sources = lec.sources.filter(z => z !== s); };
+    lec.sources.push(s);
+    lec.suivant += n;
+    lec.suivantT += n / SR;
+  }
+  suivrePosLecture();
+}
+
+function suivrePosLecture() {
+  if (!etat.lecture) return;
+  const p = lec.p0 + Math.floor((ctx.currentTime - lec.t0) * SR);
+  etat.pos = Math.max(lec.p0, Math.min(p, etat.len));
+  etat.sale = true;
+  if (lec.suivant >= etat.len && ctx.currentTime >= lec.suivantT) arreterLecture(true);
+}
+
+function arreterLecture(finAtteinte) {
+  if (!etat.lecture) return;
+  if (!finAtteinte) suivrePosLecture();
+  clearInterval(lec.minuteur);
+  lec.sources.forEach(s => { try { s.stop(); } catch (e) {} });
+  lec.sources = [];
+  etat.lecture = false;
+  if (finAtteinte) etat.pos = etat.len;
+  etat.sale = true;
+  maj();
+}
+
+// ---------------------------------------------------------------------------
+// Commandes du dictaphone
+// ---------------------------------------------------------------------------
+async function demarrerEnr() {
+  if (etat.lecture) arreterLecture();
+  try {
+    await ouvrirMicro();
+  } catch (e) {
+    message('Micro inaccessible : ' + (e.message || e.name) + '\nAutorisez le micro pour cette page dans le navigateur.', true);
+    return;
+  }
+  if (!etat.id) {
+    etat.id = Date.now().toString(36);
+    etat.cree = new Date().toISOString();
+    if (!$('nom').value.trim()) $('nom').value = nomParDefaut();
+    ecrireReglage('courante', etat.id);
+  }
+  if (etat.mode === 'insertion' && etat.pos < etat.len) {
+    etat.queue = etat.data.slice(etat.pos, etat.len);
+    etat.len = etat.pos;
+  }
+  rs.reset();
+  etat.enr = true;
+  etat.envoye = null;
+  verrouEcran();
+  sauvegardePeriodique = setInterval(() => sauver(), 30000);
+  message('');
+  maj();
+}
+
+function pauseEnr() {
+  if (!etat.enr) return;
+  etat.enr = false;
+  clearInterval(sauvegardePeriodique);
+  if (etat.queue) {
+    const q = etat.queue, p = etat.len;
+    etat.queue = null;
+    capacite(etat.len + q.length);
+    etat.data.set(q, etat.len);
+    etat.len += q.length;
+    majPeaks(p, etat.len);
+  }
+  libererEcran();
+  sauver();
+  maj();
+}
+
+function basculerEnr() { etat.enr ? pauseEnr() : demarrerEnr(); }
+function basculerLecture() { etat.lecture ? arreterLecture() : demarrerLecture(); }
+function toutArreter() { pauseEnr(); arreterLecture(); }
+
+function allerA(p) {
+  const relancer = etat.lecture;
+  if (etat.enr) pauseEnr();
+  if (etat.lecture) arreterLecture();
+  etat.pos = Math.max(0, Math.min(Math.round(p), etat.len));
+  etat.sale = true;
+  if (relancer && etat.pos < etat.len) demarrerLecture();
+  maj();
+}
+
+function changerMode(m) {
+  if (etat.enr) pauseEnr();
+  etat.mode = m;
+  ecrireReglage('mode', m);
+  maj();
+}
+
+function effacerSuite() {
+  toutArreter();
+  if (etat.pos >= etat.len) return;
+  const duree = formatTemps(etat.len - etat.pos);
+  if (!confirm('Effacer définitivement les ' + duree + ' qui suivent le curseur ?')) return;
+  etat.len = etat.pos;
+  etat.aSauver = true;
+  etat.sale = true;
+  sauver();
+  maj();
+}
+
+// Retour / avance rapide : un appui = 1 s, maintenu = défilement x6
+function defilement(sens) {
+  let minuteur = null, relancer = false;
+  return {
+    debut() {
+      if (minuteur) return;
+      relancer = etat.lecture;
+      if (etat.enr) pauseEnr();
+      if (etat.lecture) arreterLecture();
+      deplacer(sens * SR);
+      minuteur = setInterval(() => deplacer(sens * SR / 2), 80);
+    },
+    fin() {
+      if (!minuteur) return;
+      clearInterval(minuteur);
+      minuteur = null;
+      if (relancer && etat.pos < etat.len) demarrerLecture();
+    },
+  };
+}
+function deplacer(d) {
+  etat.pos = Math.max(0, Math.min(etat.pos + d, etat.len));
+  etat.sale = true;
+  maj();
+}
+const retour = defilement(-1), avance = defilement(1);
+
+function maintenir(bouton, def) {
+  bouton.addEventListener('pointerdown', e => { e.preventDefault(); bouton.setPointerCapture(e.pointerId); def.debut(); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => bouton.addEventListener(ev, () => def.fin()));
+  bouton.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.repeat) { def.debut(); } });
+  bouton.addEventListener('keyup', e => { if (e.key === 'Enter') def.fin(); });
+}
+
+// Ecran allumé pendant la dictée (téléphone)
+let verrou = null, sauvegardePeriodique = null;
+async function verrouEcran() { try { verrou = navigator.wakeLock ? await navigator.wakeLock.request('screen') : null; } catch (e) { verrou = null; } }
+function libererEcran() { try { if (verrou) verrou.release(); } catch (e) {} verrou = null; }
+
+// ---------------------------------------------------------------------------
+// Fichier WAV, export, Plaud
+// ---------------------------------------------------------------------------
+function wav() {
+  const n = etat.len;
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const txt = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  txt(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); txt(8, 'WAVE');
+  txt(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  txt(36, 'data'); v.setUint32(40, n * 2, true);
+  const pcm = new DataView(buf, 44);
+  for (let i = 0; i < n; i++) pcm.setInt16(i * 2, etat.data[i], true);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+function nomFichier() {
+  const base = ($('nom').value.trim() || nomParDefaut()).replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+  return base + '.wav';
+}
+
+function telecharger(blob, nom) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nom;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+async function nomLibre(dossier, nom) {
+  const point = nom.lastIndexOf('.');
+  const base = nom.slice(0, point), ext = nom.slice(point);
+  for (let i = 1; i < 1000; i++) {
+    const essai = i === 1 ? nom : base + ' (' + i + ')' + ext;
+    try { await dossier.getFileHandle(essai); } catch (e) { return essai; }
+  }
+  return base + ' ' + Date.now() + ext;
+}
+
+// Dossier choisi dans les réglages ('dossier' ou 'dossierPlaud'), avec autorisation d'écriture
+async function dossierAutorise(cle) {
+  if (!window.showDirectoryPicker) return null;
+  try {
+    const dossier = await lireReglage(cle);
+    if (!dossier) return null;
+    let perm = await dossier.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') perm = await dossier.requestPermission({ mode: 'readwrite' });
+    return perm === 'granted' ? dossier : null;
+  } catch (e) {
+    console.warn(e);
+    return null;
+  }
+}
+
+// Jamais d'écrasement : un fichier existant reçoit un suffixe (2), (3)…
+async function ecrireDans(dossier, blob, nom) {
+  const libre = await nomLibre(dossier, nom);
+  const fh = await dossier.getFileHandle(libre, { create: true });
+  const w = await fh.createWritable();
+  await w.write(blob);
+  await w.close();
+  return libre;
+}
+
+async function enregistrerFichier(blob) {
+  blob = blob || wav();
+  const nom = nomFichier();
+  const dossier = await dossierAutorise('dossier');
+  if (dossier) {
+    try {
+      const libre = await ecrireDans(dossier, blob, nom);
+      return { texte: 'Fichier enregistré dans « ' + dossier.name + ' » : ' + libre, nom: libre };
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+  telecharger(blob, nom);
+  return { texte: 'Fichier téléchargé : ' + nom, nom };
+}
+
+async function exporter() {
+  toutArreter();
+  if (!etat.len) return message('Rien à exporter : la dictée est vide.', true);
+  const r = await enregistrerFichier();
+  etat.exporte = new Date().toISOString();
+  await sauver(true);
+  message(r.texte);
+  return r;
+}
+
+// mode : 'appli' (feuille de partage du téléphone) ou 'site' (Plaud Web + fichier enregistré)
+async function envoyerPlaud(mode) {
+  toutArreter();
+  if (!etat.len) return message('Rien à envoyer : la dictée est vide.', true);
+  const nom = nomFichier();
+  // Téléphone : feuille de partage du système, choisir l'appli Plaud (ou OneDrive…)
+  if (MOBILE && mode !== 'site') {
+    if (!navigator.canShare) return message('Partage indisponible dans ce navigateur : utiliser « Site Plaud » ou « Exporter en WAV ».', true);
+    const f = new File([wav()], nom, { type: 'audio/wav' });
+    if (!navigator.canShare({ files: [f] })) return message('Ce navigateur refuse de partager un fichier WAV : utiliser « Site Plaud » ou « Exporter en WAV ».', true);
+    try {
+      await navigator.share({ files: [f], title: nom });
+      etat.envoye = new Date().toISOString();
+      await sauver(true);
+      message('Dictée transmise au partage : ' + nom);
+    } catch (e) {
+      if (e.name !== 'AbortError') message('Partage impossible : ' + e.message, true);
+      else message('Partage annulé : la dictée reste sur ce téléphone.');
+    }
+    return;
+  }
+  // Site Plaud : ouvert dans un autre onglet, le fichier est enregistré pour l'import
+  window.open($('plaud-url').value || PLAUD_URL_DEFAUT, '_blank', 'noopener');
+  const r = await enregistrerFichier();
+  etat.exporte = etat.envoye = new Date().toISOString();
+  await sauver(true);
+  message(r.texte + '\nLe site Plaud est ouvert dans un autre onglet : bouton « Importer », puis choisir ce fichier'
+    + (MOBILE ? ' dans Téléchargements.' : '.'));
+}
+
+async function terminer() {
+  toutArreter();
+  if (!etat.len) return message('La dictée est vide.', true);
+  if (MOBILE) {
+    const choix = $('fin-mobile').value;
+    if (choix === 'fichier') await exporter();
+    else await envoyerPlaud(choix);
+    return;
+  }
+  if ($('auto-plaud').checked) await envoyerPlaud();
+  else await exporter();
+}
+
+// ---------------------------------------------------------------------------
+// Conservation sur l'appareil (IndexedDB)
+// ---------------------------------------------------------------------------
+const base = new Promise((ok, ko) => {
+  let r;
+  try { r = indexedDB.open('elg_dictaphone', 1); } catch (e) { return ko(e); }
+  r.onupgradeneeded = () => {
+    const db = r.result;
+    db.createObjectStore('dictees', { keyPath: 'id' });
+    db.createObjectStore('audio');
+    db.createObjectStore('reglages');
+  };
+  r.onsuccess = () => ok(r.result);
+  r.onerror = () => ko(r.error);
+});
+base.catch(() => message('Conservation des dictées indisponible dans ce navigateur : exporter chaque dictée.', true));
+
+async function tx(magasins, mode, fn) {
+  const db = await base;
+  return new Promise((ok, ko) => {
+    const t = db.transaction(magasins, mode);
+    let res;
+    const r = fn(t);
+    if (r) r.onsuccess = () => { res = r.result; };
+    t.oncomplete = () => ok(res);
+    t.onerror = () => ko(t.error);
+    t.onabort = () => ko(t.error);
+  });
+}
+const lireReglage = k => tx('reglages', 'readonly', t => t.objectStore('reglages').get(k)).catch(() => undefined);
+const ecrireReglage = (k, v) => tx('reglages', 'readwrite', t => t.objectStore('reglages').put(v, k)).catch(() => {});
+
+async function sauver(force) {
+  if (!etat.id || (!etat.aSauver && !force)) return;
+  etat.aSauver = false;
+  // Pendant une insertion, la suite mise de côté est sauvegardée avec le reste
+  const q = etat.queue ? etat.queue.length : 0;
+  const tout = new Int16Array(etat.len + q);
+  tout.set(etat.data.subarray(0, etat.len));
+  if (q) tout.set(etat.queue, etat.len);
+  const meta = {
+    id: etat.id, nom: $('nom').value.trim() || nomParDefaut(), cree: etat.cree,
+    modifie: new Date().toISOString(), duree: tout.length / SR,
+    exporte: etat.exporte, envoye: etat.envoye,
+  };
+  const audio = tout.buffer;
+  try {
+    await tx(['dictees', 'audio'], 'readwrite', t => {
+      t.objectStore('dictees').put(meta);
+      t.objectStore('audio').put(audio, etat.id);
+    });
+    afficherListe();
+  } catch (e) {
+    etat.aSauver = true;
+    message('Sauvegarde sur l\'appareil impossible : ' + (e && e.message) + '\nExporter la dictée pour ne pas la perdre.', true);
+  }
+}
+
+async function ouvrirDictee(id) {
+  toutArreter();
+  await sauver();
+  const [meta, audio] = await Promise.all([
+    tx('dictees', 'readonly', t => t.objectStore('dictees').get(id)),
+    tx('audio', 'readonly', t => t.objectStore('audio').get(id)),
+  ]);
+  if (!meta) return;
+  const d = new Int16Array(audio || new ArrayBuffer(0));
+  etat.data = new Int16Array(Math.max(SR * 60, d.length * 2));
+  etat.data.set(d);
+  etat.len = d.length;
+  etat.pos = d.length;       // prêt à poursuivre la dictée
+  etat.id = meta.id; etat.cree = meta.cree; etat.exporte = meta.exporte; etat.envoye = meta.envoye;
+  $('nom').value = meta.nom;
+  majPeaks(0, etat.len);
+  ecrireReglage('courante', id);
+  message('');
+  maj();
+  afficherListe();
+}
+
+async function supprimerDictee(id, nom) {
+  if (!confirm('Supprimer la dictée « ' + nom + ' » de cet appareil ?\nLes fichiers déjà exportés ne sont pas touchés.')) return;
+  await tx(['dictees', 'audio'], 'readwrite', t => {
+    t.objectStore('dictees').delete(id);
+    t.objectStore('audio').delete(id);
+  });
+  if (id === etat.id) nouvelle(true);
+  afficherListe();
+}
+
+async function nouvelle(sansSauver) {
+  toutArreter();
+  if (!sansSauver) await sauver();
+  etat.data = new Int16Array(SR * 60);
+  etat.len = etat.pos = 0;
+  etat.id = etat.cree = etat.exporte = etat.envoye = null;
+  $('nom').value = '';
+  etat.sale = true;
+  ecrireReglage('courante', null);
+  message('');
+  maj();
+  afficherListe();
+}
+
+async function afficherListe() {
+  let liste = [];
+  try { liste = await tx('dictees', 'readonly', t => t.objectStore('dictees').getAll()) || []; } catch (e) {}
+  liste.sort((a, b) => (b.modifie || '').localeCompare(a.modifie || ''));
+  const ul = $('liste');
+  ul.innerHTML = '';
+  if (!liste.length) {
+    ul.innerHTML = '<li class="vide">Aucune dictée conservée sur cet appareil.</li>';
+    return;
+  }
+  liste.forEach(m => {
+    const li = document.createElement('li');
+    if (m.id === etat.id) li.className = 'courante';
+    const infos = document.createElement('div');
+    infos.className = 'infos';
+    const titre = document.createElement('div');
+    titre.className = 'titre';
+    titre.textContent = m.nom;
+    const detail = document.createElement('div');
+    detail.className = 'detail';
+    const sorts = [];
+    if (m.envoye) sorts.push('envoyée à Plaud');
+    else if (m.exporte) sorts.push('exportée');
+    detail.textContent = formatTemps(m.duree * SR) + ' · ' + new Date(m.modifie).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) + (sorts.length ? ' · ' + sorts.join(', ') : '');
+    infos.append(titre, detail);
+    const ouvrir = document.createElement('button');
+    ouvrir.textContent = 'Ouvrir';
+    ouvrir.onclick = () => ouvrirDictee(m.id);
+    const suppr = document.createElement('button');
+    suppr.textContent = 'Supprimer';
+    suppr.onclick = () => supprimerDictee(m.id, m.nom);
+    li.append(infos, ouvrir, suppr);
+    ul.appendChild(li);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Affichage
+// ---------------------------------------------------------------------------
+function formatTemps(echantillons) {
+  const s = Math.floor(echantillons / SR);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const p = n => String(n).padStart(2, '0');
+  return h ? h + ':' + p(m) + ':' + p(ss) : p(m) + ':' + p(ss);
+}
+
+function nomParDefaut() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return 'Dictée ' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + 'h' + p(d.getMinutes());
+}
+
+function message(t, erreur) {
+  const el = $('message');
+  el.textContent = t;
+  el.className = erreur ? 'erreur' : '';
+}
+
+function maj() {
+  const e = $('etat');
+  if (etat.enr) { e.textContent = etat.mode === 'insertion' ? 'Enregistrement (insertion)' : 'Enregistrement'; e.className = 'etat enr'; }
+  else if (etat.lecture) { e.textContent = 'Lecture'; e.className = 'etat lec'; }
+  else if (etat.len) { e.textContent = 'Pause'; e.className = 'etat'; }
+  else { e.textContent = 'Prêt'; e.className = 'etat'; }
+  $('btn-enr').classList.toggle('actif', etat.enr);
+  $('btn-enr').setAttribute('aria-label', etat.enr ? 'Pause' : 'Enregistrer');
+  $('ico-enr').setAttribute('d', etat.enr ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16z');
+  $('btn-lecture').classList.toggle('actif', etat.lecture);
+  $('btn-lecture').setAttribute('aria-label', etat.lecture ? 'Stop' : 'Lecture');
+  $('ico-lecture').setAttribute('d', etat.lecture ? 'M6 6h12v12H6z' : 'M7 4v16l13-8z');
+  $('mode-ecr').setAttribute('aria-pressed', etat.mode === 'ecrasement');
+  $('mode-ins').setAttribute('aria-pressed', etat.mode === 'insertion');
+  $('mode-actif').textContent = etat.mode === 'insertion'
+    ? 'Mode insertion : le passage dicté s\'intercale au curseur'
+    : 'Mode écrasement : le passage dicté remplace ce qui suit le curseur';
+  const vide = etat.len === 0;
+  ['btn-lecture', 'btn-debut', 'btn-retour', 'btn-avance', 'btn-fin', 'btn-exporter', 'btn-plaud', 'btn-terminer'].forEach(id => { $(id).disabled = vide && !etat.enr; });
+  $('btn-tronquer').disabled = etat.pos >= etat.len;
+  etat.sale = true;
+}
+
+function couleur(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+function dessiner() {
+  const cv = $('onde');
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, W, H);
+  const total = etat.len + (etat.queue ? etat.queue.length : 0);
+  const vue = Math.max(VUE_MIN, total);
+  const nb = Math.ceil(etat.len / BLOC);
+  const cOnde = couleur('--onde'), cLue = couleur('--onde-lue');
+  const milieu = H / 2;
+  for (let x = 0; x < W; x++) {
+    const s0 = Math.floor(x * vue / W), s1 = Math.floor((x + 1) * vue / W);
+    if (s0 >= etat.len) break;
+    const b0 = Math.floor(s0 / BLOC), b1 = Math.min(nb, Math.max(b0 + 1, Math.ceil(s1 / BLOC)));
+    let m = 0;
+    for (let b = b0; b < b1; b++) if (peaks[b] > m) m = peaks[b];
+    const h = Math.max(1, (m / 255) * (H / 2 - 4));
+    g.fillStyle = s0 < etat.pos ? cLue : cOnde;
+    g.fillRect(x, milieu - h, 1, h * 2);
+  }
+  if (etat.queue) {
+    const x0 = Math.floor(etat.len * W / vue), x1 = Math.floor(total * W / vue);
+    g.fillStyle = cOnde;
+    g.globalAlpha = 0.35;
+    g.fillRect(x0 + 2, milieu - 2, x1 - x0, 4);
+    g.globalAlpha = 1;
+  }
+  const xc = Math.min(W - 2, Math.floor(etat.pos * W / vue));
+  g.fillStyle = etat.enr ? couleur('--rouge') : couleur('--texte');
+  g.fillRect(xc, 0, Math.max(2, dpr * 2), H);
+  $('t-pos').textContent = formatTemps(etat.pos);
+  $('t-tot').textContent = formatTemps(total);
+}
+
+let niveauAffiche = 0;
+function boucle() {
+  if (etat.lecture) suivrePosLecture();
+  if (etat.sale || etat.enr || etat.lecture) { dessiner(); etat.sale = false; }
+  niveauAffiche += ((flux ? niveauCible : 0) - niveauAffiche) * 0.35;
+  $('niveau-barre').style.width = Math.round(niveauAffiche * 100) + '%';
+  if (etat.enr && !$('btn-tronquer').disabled) $('btn-tronquer').disabled = true;
+  requestAnimationFrame(boucle);
+}
+
+// ---------------------------------------------------------------------------
+// Branchements
+// ---------------------------------------------------------------------------
+$('btn-enr').onclick = basculerEnr;
+$('btn-lecture').onclick = basculerLecture;
+$('btn-debut').onclick = () => allerA(0);
+$('btn-fin').onclick = () => allerA(etat.len);
+maintenir($('btn-retour'), retour);
+maintenir($('btn-avance'), avance);
+$('mode-ecr').onclick = () => changerMode('ecrasement');
+$('mode-ins').onclick = () => changerMode('insertion');
+$('btn-tronquer').onclick = effacerSuite;
+$('btn-terminer').onclick = terminer;
+$('btn-exporter').onclick = exporter;
+$('btn-plaud').onclick = () => envoyerPlaud('appli');
+$('btn-plaud-site').onclick = () => envoyerPlaud('site');
+$('fin-mobile').addEventListener('change', e => ecrireReglage('finMobile', e.target.value));
+$('btn-nouvelle').onclick = () => nouvelle();
+$('nom').addEventListener('change', () => { etat.aSauver = true; sauver(); });
+$('auto-plaud').addEventListener('change', e => ecrireReglage('autoPlaud', e.target.checked));
+$('plaud-url').addEventListener('change', e => ecrireReglage('plaudUrl', e.target.value.trim()));
+$('micro').addEventListener('change', async e => {
+  ecrireReglage('micro', e.target.value);
+  const enCours = etat.enr;
+  if (enCours) pauseEnr();
+  fermerMicro();
+  if (enCours) demarrerEnr();
+});
+
+if (window.showDirectoryPicker) {
+  $('btn-dossier').onclick = async () => {
+    try {
+      const d = await window.showDirectoryPicker({ id: 'elg-dictaphone', mode: 'readwrite' });
+      await ecrireReglage('dossier', d);
+      $('nom-dossier').textContent = d.name;
+      $('nom-dossier').className = '';
+    } catch (e) {}
+  };
+} else {
+  $('reglage-dossier').hidden = true;
+}
+
+// Curseur à la souris ou au doigt sur l'enveloppe
+(() => {
+  const cv = $('onde');
+  let actif = false, relancer = false;
+  const placer = e => {
+    const r = cv.getBoundingClientRect();
+    const total = etat.len + (etat.queue ? etat.queue.length : 0);
+    const vue = Math.max(VUE_MIN, total);
+    etat.pos = Math.max(0, Math.min(Math.round((e.clientX - r.left) / r.width * vue), etat.len));
+    etat.sale = true;
+  };
+  cv.addEventListener('pointerdown', e => {
+    if (etat.enr) return;
+    actif = true;
+    relancer = etat.lecture;
+    if (etat.lecture) arreterLecture();
+    cv.setPointerCapture(e.pointerId);
+    placer(e);
+  });
+  cv.addEventListener('pointermove', e => { if (actif) placer(e); });
+  const fin = () => {
+    if (!actif) return;
+    actif = false;
+    if (relancer && etat.pos < etat.len) demarrerLecture();
+    maj();
+  };
+  cv.addEventListener('pointerup', fin);
+  cv.addEventListener('pointercancel', fin);
+})();
+
+// Clavier (et boutons d'un micro de dictée réglés pour envoyer ces touches)
+const touchesTenues = new Set();
+document.addEventListener('keydown', e => {
+  const dansChamp = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) && e.target.type !== 'checkbox';
+  const k = e.key;
+  const f = { F7: 'retour', F8: 'enr', F9: 'lecture', F10: 'avance' }[k];
+  const simple = dansChamp ? null : ({ r: 'enr', R: 'enr', ' ': 'lecture', ArrowLeft: 'retour', ArrowRight: 'avance',
+    Home: 'debut', End: 'fin', i: 'mode', I: 'mode', Escape: 'stop' })[k];
+  const action = f || simple;
+  if (!action) return;
+  if (e.target.tagName === 'BUTTON' && (k === ' ' || k === 'Enter')) return;
+  e.preventDefault();
+  if (action === 'retour' || action === 'avance') {
+    if (!touchesTenues.has(k)) { touchesTenues.add(k); (action === 'retour' ? retour : avance).debut(); }
+    return;
+  }
+  if (e.repeat) return;
+  if (action === 'enr') basculerEnr();
+  else if (action === 'lecture') basculerLecture();
+  else if (action === 'debut') allerA(0);
+  else if (action === 'fin') allerA(etat.len);
+  else if (action === 'mode') changerMode(etat.mode === 'insertion' ? 'ecrasement' : 'insertion');
+  else if (action === 'stop') toutArreter();
+});
+document.addEventListener('keyup', e => {
+  if (!touchesTenues.has(e.key)) return;
+  touchesTenues.delete(e.key);
+  if (e.key === 'F7' || e.key === 'ArrowLeft') retour.fin(); else avance.fin();
+  e.preventDefault();
+});
+
+window.addEventListener('beforeunload', e => {
+  if (etat.enr || etat.aSauver) { sauver(); e.preventDefault(); e.returnValue = ''; }
+});
+// Téléphone : écran verrouillé ou autre appli → pause franche (le navigateur coupe souvent le micro),
+// pour ne jamais laisser croire qu'on enregistre encore.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (MOBILE && etat.enr) {
+      pauseEnr();
+      fermerMicro();
+      message('Enregistrement mis en pause (écran verrouillé ou appli quittée). Appuyer sur ● pour reprendre.');
+    } else sauver();
+  } else if (etat.enr) verrouEcran();
+});
+
+// Démarrage
+(async () => {
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  $('plaud-url').value = (await lireReglage('plaudUrl')) || PLAUD_URL_DEFAUT;
+  $('auto-plaud').checked = !!(await lireReglage('autoPlaud'));
+  $('fin-mobile').value = (await lireReglage('finMobile')) || 'appli';
+  const mode = await lireReglage('mode');
+  if (mode) etat.mode = mode;
+  const dossier = await lireReglage('dossier');
+  if (dossier && window.showDirectoryPicker) { $('nom-dossier').textContent = dossier.name; $('nom-dossier').className = ''; }  await listerMicros();
+  const courante = await lireReglage('courante');
+  if (courante) await ouvrirDictee(courante);
+  maj();
+  afficherListe();
+  requestAnimationFrame(boucle);
+})();
+
+// Accès pour les tests
+window.ELG_Dictaphone = { etat, ecrire, wav, demarrerEnr, pauseEnr, allerA, changerMode, sauver, SR };
+</script>
+</body>
+</html>
