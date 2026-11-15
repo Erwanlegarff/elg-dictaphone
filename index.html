@@ -137,7 +137,7 @@ canvas { width: 100%; height: 110px; display: block; border-radius: 8px; backgro
 </head>
 <body>
 <header>
-  <h1>ELG Dictaphone <span class="version">essai téléphone</span></h1>
+  <h1>ELG Dictaphone <span class="version" id="version">v2</span></h1>
   <span id="etat" class="etat">Prêt</span>
 </header>
 <main>
@@ -1071,6 +1071,14 @@ document.addEventListener('visibilitychange', () => {
   afficherListe();
   requestAnimationFrame(boucle);
 })();
+
+// Hors connexion : l'appli est gardée dans le téléphone par sw.js (https ou localhost seulement)
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => navigator.serviceWorker.ready)
+    .then(() => { $('version').textContent = 'v2 · hors connexion prêt'; })
+    .catch(e => console.warn('Service worker :', e));
+}
 
 // Accès pour les tests
 window.ELG_Dictaphone = { etat, ecrire, wav, demarrerEnr, pauseEnr, allerA, changerMode, sauver, SR };
